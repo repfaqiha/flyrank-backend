@@ -1,6 +1,7 @@
-from fastapi import FastAPI, HTTPException
-
+from fastapi import FastAPI, Request
 from fastapi.responses import JSONResponse
+from fastapi.exceptions import RequestValidationError
+from pydantic import BaseModel, Field
 
 app = FastAPI()
 
@@ -35,5 +36,20 @@ def get_task(id:int):
         content={"error":f"task {id} not found"}
     )
    
-         
+class TaskCreate(BaseModel):
+    title:str=Field(min_length=1)
 
+@app.post("/tasks", status_code=201)
+def create_task(task: TaskCreate):
+    print("I RAN")
+    tasks.append(
+        {"id": tasks[-1]["id"] + 1, "title": task.title, "done": False}
+    )
+    return tasks[-1]
+
+@app.exception_handler(RequestValidationError)
+def validation_error_handler(request:Request, exc:RequestValidationError):
+    return JSONResponse(
+        status_code=400,
+        content={"error":"Invalid Request Data"}
+    )

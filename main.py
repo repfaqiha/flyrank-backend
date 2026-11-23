@@ -51,5 +51,43 @@ def create_task(task: TaskCreate):
 def validation_error_handler(request:Request, exc:RequestValidationError):
     return JSONResponse(
         status_code=400,
-        content={"error":"Invalid Request Data"}
+        content={"error":"Invalid Request"}
     )
+
+class TaskUpdate(BaseModel):
+    title:str | None = Field(default=None, min_length=1)
+    done: bool | None=None
+
+@app.put("/tasks/{id}", status_code=200)
+def change_task(task: TaskUpdate, id:int):
+    for x in tasks:
+        if x["id"]==id:
+            if task.title is not None:
+                x["title"]=task.title
+            if task.done is not None:
+                x["done"]=task.done
+            if task.done is None and task.title is None:
+                return JSONResponse(
+                    status_code=400,
+                    content={"error": "empty request"}
+                )
+            return x
+    return JSONResponse(
+        status_code=404,
+        content={"error":f"{id} is an unknown id"}
+    )
+        
+
+    
+
+@app.delete("/tasks/{id}", status_code=204)
+def delete_task(id: int):
+    orig=len(tasks)
+    for x in tasks:
+        if x["id"]==id:
+            tasks.remove(x)
+    if len(tasks)==orig:
+        return JSONResponse(
+            status_code=404,
+            content={"error": f"{id} is an unknown id"}
+        )
